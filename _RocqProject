@@ -1,0 +1,9 @@
+-Q core pt_effects.core
+-Q effects pt_effects.effects
+-Q examples examples
+
+-docroot pt_effects
+
+core
+effects
+examples
