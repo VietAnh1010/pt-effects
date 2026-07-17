@@ -59,6 +59,7 @@ Fixpoint run {S A} (m : state S A) (s : S) : A * S :=
       statePT P (Step Get k)     = \s -> statePT P (k s) s
       statePT P (Step (Put s) k) = \_ -> statePT P (k tt) s
 >> *)
+
 Fixpoint state_pt {S A} (P : A * S -> Prop) (m : state S A) (s : S) : Prop :=
   match m with
   | Pure x => P (x, s)
@@ -70,7 +71,16 @@ Fixpoint state_pt {S A} (P : A * S -> Prop) (m : state S A) (s : S) : Prop :=
   end.
 
 Definition wp_state {S A B} (f : A -> state S B) (P : A * S -> B * S -> Prop) : A * S -> Prop :=
-  fun '(x, s) => state_pt (P (x, s)) (f x) s.
+  fun '(x, s) => wp f (fun _ m => state_pt (P (x, s)) m s) x.
+
+Definition state_pt' {S A} (P : S -> A * S -> Prop) (m : state S A) (s : S) : Prop :=
+  state_pt (P s) m s.
+
+Definition wp_state_alt {S A B} (f : A -> state S B) (P : A * S -> B * S -> Prop) : A * S -> Prop :=
+  fun '(x, s) => wp f (fun _ m => state_pt' (fun s' => P (x, s')) m s) x.
+
+Goal @wp_state = @wp_state_alt.
+Proof. reflexivity. Qed.
 
 (** ** Exercises
 
@@ -82,13 +92,13 @@ Lemma soundness_aux {S A} (P : A * S -> Prop) (m : state S A) :
   forall s, state_pt P m s -> P (run m s).
 Proof.
   induction m as [x | c k IH]; simpl; intros s.
-  - intros HP. exact HP.
+  - tauto.
   - destruct c as [| s'].
     + exact (IH s s).
     + exact (IH tt s').
 Qed.
 
-Theorem soundness {S A B} (P : A * S -> B * S -> Prop) (f : A -> state S B) (s : S) (x : A) :
+Theorem soundness {S A B} (P : A * S -> B * S -> Prop) (f : A -> state S B) (x : A) (s : S) :
   wp_state f P (x, s) -> P (x, s) (run (f x) s).
 Proof.
   unfold wp_state.
@@ -110,6 +120,16 @@ Lemma state_pt_bind {S A B} (P : B * S -> Prop) (m : state S A) (k : A -> state 
 Proof.
   induction m as [x | c k' IH]; simpl; intros s.
   - tauto.
+  - destruct c as [| s'].
+    + exact (IH s s).
+    + exact (IH tt s').
+Qed.
+
+Lemma run_bind {S A B} (m : state S A) (k : A -> state S B) :
+  forall s, run (bind m k) s = let (x, s') := run m s in run (k x) s'.
+Proof.
+  induction m as [x | c k' IH]; simpl; intros s.
+  - reflexivity.
   - destruct c as [| s'].
     + exact (IH s s).
     + exact (IH tt s').
