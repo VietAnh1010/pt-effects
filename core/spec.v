@@ -13,7 +13,7 @@
       wpSpec [[ pre , post ]] P = \x -> pre x /\ (forall y -> post x y -> P x y)
 >>
 
-    A specification is a pre/postcondition pair; [wp_spec] turns it into a
+    A specification is a pre/postcondition pair; [wp_spec] maps it to a
     predicate transformer, so specifications and programs are compared in one
     and the same semantic domain. This is what makes the refinement calculus of
     Section 7 possible. *)

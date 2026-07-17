@@ -13,8 +13,8 @@
         Step : (c : C) (k : R c -> Free C R a) -> Free C R a
 >>
 
-    The Agda development uses [Set] throughout; here the responses live in
-    [Type] and predicates land in [Prop] (see [pt_effects.core.wp]). *)
+    The Agda development uses [Set] throughout; here the responses have type
+    [Type] and predicates have type [Prop] (see [pt_effects.core.wp]). *)
 
 From Stdlib Require Import FunctionalExtensionality.
 
@@ -57,7 +57,7 @@ End FreeNotations.
 
     The [Step] cases need functional extensionality: two continuations that
     agree pointwise are not definitionally equal in Rocq. The Agda development
-    gets this for free from its use of extensional equality reasoning. *)
+    does not need it, since its equality reasoning is extensional. *)
 
 Lemma bind_pure_l {C R A B} (x : A) (f : A -> free C R B) : bind (Pure x) f = f x.
 Proof. reflexivity. Qed.
@@ -79,7 +79,7 @@ Proof.
     reflexivity.
 Qed.
 
-(** A [bind] can only produce a [Pure] when both arguments do. *)
+(** [bind m f] equals a [Pure] only when [m] does and [f] maps its value to one. *)
 Lemma bind_eq_pure {C R A B} (m : free C R A) (f : A -> free C R B) (y : B) :
   bind m f = Pure y -> exists x, m = Pure x /\ f x = Pure y.
 Proof.

@@ -24,8 +24,8 @@ Definition abort {A} : partial A := Step CAbort (fun r : R CAbort => match r wit
 
 (** ** Semantics
 
-    [must_pt] insists a computation succeeds: an aborting program satisfies no
-    postcondition at all. This is the "total correctness" reading. *)
+    [must_pt] holds only if the computation succeeds: an aborting program
+    satisfies no postcondition. This is the "total correctness" reading. *)
 Definition must_pt {A B} (P : forall x : A, B x -> Prop) (x : A) (m : partial (B x)) : Prop :=
   match m with
   | Pure y => P x y
@@ -45,8 +45,8 @@ Definition must_pt {A B} (P : forall x : A, B x -> Prop) (x : A) (m : partial (B
 >>
 
     The paper's [mayPT] takes a bare predicate on results. This takes the same
-    indexed relation between input and output as [must_pt], so that the two are
-    interchangeable and the lemmas below mirror each other exactly; take [B]
+    indexed relation between input and output as [must_pt], so the two are
+    interchangeable and the lemmas below have the same shape; take [B]
     constant to recover the paper's form. *)
 Definition may_pt {A B} (P : forall x : A, B x -> Prop) (x : A) (m : partial (B x)) : Prop :=
   match m with
@@ -79,13 +79,13 @@ Proof.
   exact (H_impl y HP).
 Qed.
 
-(** [abort] refines nothing: it satisfies no postcondition. *)
+(** [abort] satisfies no postcondition. *)
 Lemma must_pt_abort {A B} (P : forall x : A, B x -> Prop) (x : A) : ~ must_pt P x abort.
 Proof. intros H_pt. contradiction. Qed.
 
 (** ** [may_pt]
 
-    The mirror image of the [must_pt] rules above. *)
+    The duals of the [must_pt] rules above. *)
 
 Lemma may_pt_inv {A B} (P : forall x : A, B x -> Prop) (x : A) (m : partial (B x)) :
   may_pt P x m ->

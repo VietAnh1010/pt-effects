@@ -44,7 +44,7 @@ Fixpoint safe_div (e : expr) : Prop :=
 (** ** Correctness
 
     [correct] is the paper's [SafeDiv ⊆ wpPartial ⟦_⟧ _⇓_]: the syntactic
-    precondition is enough to guarantee the interpreter both terminates and
+    precondition suffices to guarantee that the interpreter terminates and
     agrees with the big-step relation. *)
 Theorem correct : safe_div ⊆ wp_partial denote eval.
 Proof.

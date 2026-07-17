@@ -11,8 +11,8 @@
 >>
 
     the analogue of [wp (c1; c2, R) = wp (c1, wp (c2, R))] from imperative
-    program logics. Here it is [fold_bind]; restricted to Kleisli arrows it
-    gives [compositionality_left] and [compositionality_right]. Section 4 proves
+    program logics. Here it is [compositionality]; restricted to Kleisli arrows
+    it gives [compositionality_left] and [compositionality_right]. Section 4 proves
     the state case separately, as [state.state_pt_bind]. *)
 
 From Stdlib Require Import FunctionalExtensionality.
@@ -38,9 +38,13 @@ Fixpoint fold {C R X A} (p : A -> X) (s : alg C R X) (m : free C R A) : X :=
   | Step c k => s c (fun r => fold p s (k r))
   end.
 
-(** Needs extensionality, since the abstract algebra is applied to continuations
-    that agree only pointwise; [state.state_pt_bind] is the same law for state,
-    axiom-free because its algebra is concrete. *)
+(** The compositionality law as a definitional equality, the literal rendering
+    of the paper's [≡]. Needs extensionality, since the abstract algebra is
+    applied to continuations that agree only pointwise. The refinement rules no
+    longer depend on it: they use [compositionality], an [<->] form that trades
+    this axiom for [alg_monotone]. It is kept as the closest reading of the
+    paper. [state.state_pt_bind] is the same law for state, axiom-free because
+    its algebra is concrete. *)
 Lemma fold_bind {C R X A B} (p : B -> X) (s : alg C R X) (m : free C R A) (k : A -> free C R B) :
   fold p s (bind m k) = fold (fun x => fold p s (k x)) s m.
 Proof.
@@ -48,6 +52,33 @@ Proof.
   - reflexivity.
   - rewrite -> (functional_extensionality _ _ IH).
     reflexivity.
+Qed.
+
+(** Monotonicity, which the paper states of [pt] (proved below as [fold_mono]):
+
+<<
+      monotonicity : P ⊆ Q -> (c : Free C R a) -> pt c P -> pt c Q
+>>
+
+    [alg_monotone] captures it as a property of the algebra alone; every algebra
+    in the paper has it. *)
+Definition alg_monotone {C R} (F : alg C R Prop) : Prop :=
+  forall (c : C) (P Q : R c -> Prop), P ⊆ Q -> F c P -> F c Q.
+
+(** [compositionality] as an [<->]: the funext-free counterpart of [fold_bind],
+    with [alg_monotone] replacing the pointwise-equality rewrite. This is
+    the form the refinement rules use, so both [compositionality_left] and
+    [compositionality_right] carry the [alg_monotone] hypothesis - where the
+    paper needs monotonicity only for the latter. *)
+Lemma compositionality {C R A B} (F : alg C R Prop) (P : B -> Prop) (m : free C R A) (k : A -> free C R B) :
+  alg_monotone F -> fold P F (bind m k) <-> fold (fun x => fold P F (k x)) F m.
+Proof.
+  intros H_monotone.
+  induction m as [x | c k' IH]; simpl.
+  - tauto.
+  - split.
+    + exact (H_monotone c _ _ (fun r => proj1 (IH r))).
+    + exact (H_monotone c _ _ (fun r => proj2 (IH r))).
 Qed.
 
 (** ** Predicate transformer semantics
@@ -65,29 +96,20 @@ Definition wp_free {C R A B} (F : alg C R Prop) (f : forall x : A, free C R (B x
     equational reasoning. Together they make these transformers an ordered monad
     [Katsumata and Sato 2013]. *)
 
-(** Refinement on the *first* argument of a Kleisli composition. *)
+(** Refinement on the *first* argument of a Kleisli composition. Carries
+    [alg_monotone] only to invoke [compositionality]; the paper's
+    compositionality-left needs no monotonicity at all. *)
 Theorem compositionality_left {C' R A B C} (F : alg C' R Prop) (f1 f2 : A -> free C' R B) (g : B -> free C' R C) :
+  alg_monotone F ->
   wp_free F f1 ⊑ wp_free F f2 ->
   wp_free F (f1 >=> g) ⊑ wp_free F (f2 >=> g).
 Proof.
   unfold wp_free, wp, kleisli.
-  intros H_refines P x.
-  rewrite -> fold_bind.
-  rewrite -> fold_bind.
-  exact (H_refines (fun x y => fold (P x) F (g y)) x).
+  intros H_monotone H_refines P x HP.
+  apply (proj2 (compositionality _ _ _ _ H_monotone)).
+  apply (H_refines (fun x y => fold (P x) F (g y)) x).
+  exact (proj1 (compositionality _ _ _ _ H_monotone) HP).
 Qed.
-
-(** [compositionality_right] needs the transformers monotone, which the paper
-    states of [pt]:
-
-<<
-      monotonicity : P ⊆ Q -> (c : Free C R a) -> pt c P -> pt c Q
->>
-
-    For a fold that is a property of the algebra alone. Every algebra in the
-    paper has it. *)
-Definition alg_monotone {C R} (F : alg C R Prop) : Prop :=
-  forall (c : C) (k1 k2 : R c -> Prop), (forall r, k1 r -> k2 r) -> F c k1 -> F c k2.
 
 (** The paper's [monotonicity]. *)
 Lemma fold_mono {C R A} (F : alg C R Prop) (P Q : A -> Prop) (m : free C R A) :
@@ -99,17 +121,18 @@ Proof.
   - exact (H_monotone c (fun r => fold P F (k r)) (fun r => fold Q F (k r)) IH).
 Qed.
 
-(** Refinement on the *second* argument. Needs monotonicity, where
-    [compositionality_left] does not: the two sides differ inside the
-    postcondition, which [⊑] alone cannot reach. *)
+(** Refinement on the *second* argument. Uses [alg_monotone] twice: once for
+    [compositionality] (as [compositionality_left] does), and again through
+    [fold_mono], to reach inside the postcondition where the two sides differ
+    and [⊑] alone cannot. *)
 Theorem compositionality_right {C' R A B C} (F : alg C' R Prop) (f : A -> free C' R B) (g1 g2 : B -> free C' R C) :
   alg_monotone F ->
   wp_free F g1 ⊑ wp_free F g2 ->
   wp_free F (f >=> g1) ⊑ wp_free F (f >=> g2).
 Proof.
   unfold wp_free, wp, kleisli.
-  intros H_monotone H_refines P x.
-  rewrite -> fold_bind.
-  rewrite -> fold_bind.
-  exact (fold_mono F _ _ (f x) H_monotone (H_refines (fun _ => P x))).
+  intros H_monotone H_refines P x HP.
+  apply (proj2 (compositionality _ _ _ _ H_monotone)).
+  apply (fold_mono F _ _ (f x) H_monotone (H_refines (fun _ => P x))).
+  exact (proj1 (compositionality _ _ _ _ H_monotone) HP).
 Qed.
