@@ -52,6 +52,6 @@ Lemma wp_spec_weaken {A B} (p : A -> Prop) (q1 q2 : forall x : A, B x -> Prop) :
 Proof.
   intros H_impl P x [H_pre H_post]. split.
   - exact H_pre.
-  - intros y H_q2.
-    exact (H_post y (H_impl x y H_q2)).
+  - intros y Hq2.
+    exact (H_post y (H_impl x y Hq2)).
 Qed.

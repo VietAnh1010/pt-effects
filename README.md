@@ -27,6 +27,7 @@ Requires Rocq 9.0 (tested against 9.0.0).
 | `effects/rec.v` | `pt_effects.effects.rec` | §6 - `Rec`, `call`, `petrol`, `invariant`, `wp_rec`, `soundness` |
 | `effects/refine.v` | `pt_effects.effects.refine` | §7 - refinement calculus |
 | `examples/div.v` | `examples.div` | §3 - the expression/division example |
+| `examples/add.v` | `examples.add` | §3.3 - the Add / stack example |
 | `examples/relabel.v` | `examples.relabel` | §4.1 - tree relabelling |
 
 ## Porting notes

@@ -43,10 +43,10 @@ Fixpoint safe_div (e : expr) : Prop :=
 
 (** ** Correctness
 
-    [correct] is the paper's [SafeDiv ⊆ wpPartial ⟦_⟧ _⇓_]: the syntactic
+    [correctness] is the paper's [SafeDiv ⊆ wpPartial ⟦_⟧ _⇓_]: the syntactic
     precondition suffices to guarantee that the interpreter terminates and
     agrees with the big-step relation. *)
-Theorem correct : safe_div ⊆ wp_partial denote eval.
+Theorem correctness : safe_div ⊆ wp_partial denote eval.
 Proof.
   intros e. unfold wp_partial, wp.
   induction e as [n | e1 IHe1 e2 IHe2]; simpl.
@@ -61,10 +61,10 @@ Qed.
 
 (** ** Soundness and completeness
 
-    [sound] and [complete] together say [dom ⟦_⟧] and [wpPartial ⟦_⟧ _⇓_]
+    [soundness] and [completeness] together say [dom ⟦_⟧] and [wpPartial ⟦_⟧ _⇓_]
     coincide: the interpreter is correct exactly where it is defined. *)
 
-Theorem sound : dom denote ⊆ wp_partial denote eval.
+Theorem soundness : dom denote ⊆ wp_partial denote eval.
 Proof.
   intros e. unfold dom, wp_partial, wp.
   induction e as [n | e1 IHe1 e2 IHe2]; simpl.
@@ -80,21 +80,21 @@ Proof.
     + exact (eval_div e1 e2 v1 v2' (IHe1 I) (IHe2 I)).
 Qed.
 
-Theorem complete : wp_partial denote eval ⊆ dom denote.
+Theorem completeness : wp_partial denote eval ⊆ dom denote.
 Proof. exact (wp_partial_dom denote eval). Qed.
 
 (** ** Relating the two
 
     [safe_div] is a sufficient but not necessary condition: it implies
-    [dom denote], via [correct] and [complete]. *)
+    [dom denote], via [correctness] and [completeness]. *)
 Theorem safe_div_dom : safe_div ⊆ dom denote.
-Proof. exact (subset_trans safe_div (wp_partial denote eval) (dom denote) correct complete). Qed.
+Proof. exact (subset_trans safe_div (wp_partial denote eval) (dom denote) correctness completeness). Qed.
 
 (** The specification [[safe_div, _⇓_]] is refined by the interpreter. This
-    is the Section 7 reading of [correct]: a program refines a spec. *)
+    is the Section 7 reading of [correctness]: a program refines a spec. *)
 Theorem denote_refines_spec : wp_spec (Spec safe_div eval) ⊑ wp_partial denote.
 Proof.
   intros P e [H_pre H_post].
   unfold pre, post, wp_partial, wp in *.
-  exact (must_pt_mono eval P e (denote e) H_post (correct e H_pre)).
+  exact (must_pt_mono eval P e (denote e) H_post (correctness e H_pre)).
 Qed.
