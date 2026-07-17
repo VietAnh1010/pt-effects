@@ -174,3 +174,37 @@ Proof.
     + rewrite -> Hk in H_pt.
       contradiction.
 Qed.
+
+(** ** Alternative semantics: a default handler (Section 3.4)
+
+    [wp_partial] holds only if a computation succeeds. An aborting computation
+    can instead be handled by supplying a default result: [default_handler] runs
+    it that way, and [default_pt] / [wp_default] are the matching predicate
+    transformer, which requires the postcondition of the default value on abort.
+    [d] is a default per input [x], so that [P x (d x)] is well typed for a
+    dependent [B]; take [d] constant to recover the paper's single value. *)
+Definition default_handler {A} (d : A) (m : partial A) : A :=
+  match m with
+  | Pure x => x
+  | Step _ _ => d
+  end.
+
+Definition default_pt {A B} (d : forall x : A, B x) (P : forall x : A, B x -> Prop) (x : A) (m : partial (B x)) : Prop :=
+  match m with
+  | Pure y => P x y
+  | Step _ _ => P x (d x)
+  end.
+
+Definition wp_default {A B} (d : forall x : A, B x) (f : forall x : A, partial (B x)) : PT A B :=
+  fun P => wp f (default_pt d P).
+
+(** [wp_default] is sound for [default_handler]: when the computed precondition
+    holds, running the handler satisfies the postcondition. *)
+Lemma soundness {A B} (d : forall x : A, B x) (P : forall x : A, B x -> Prop) (f : forall x : A, partial (B x)) (x : A) :
+  wp_default d f P x -> P x (default_handler (d x) (f x)).
+Proof.
+  unfold wp_default, wp, default_pt, default_handler.
+  destruct (f x) as [y | c k].
+  - intros HP. exact HP.
+  - intros HP. exact HP.
+Qed.
