@@ -1,8 +1,7 @@
 # pt-effects
 
-A Rocq port of Wouter Swierstra and Tim Baanen, [*A Predicate Transformer
-Semantics for Effects*](https://webspace.science.uu.nl/~swier004/publications/2019-icfp.pdf)
-(ICFP 2019). The paper is in Agda; this is a study port.
+A Rocq port of Wouter Swierstra and Tim Baanen, *A Predicate Transformer
+Semantics for Effects* (ICFP 2019). The paper is in Agda; this is a study port.
 
 ## Building
 
