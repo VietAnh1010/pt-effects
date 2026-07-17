@@ -15,6 +15,7 @@
 From Stdlib Require Import List.
 From pt_effects.core Require Import free wp spec.
 Import ListNotations.
+Import WpNotations.
 
 Inductive C : Type :=
 | Fail : C
@@ -93,7 +94,8 @@ Definition wp_any {A B} (f : forall x : A, nondet (B x)) : PT A B :=
     [m]; [in_app_iff] and [Forall_app] / [Exists_app] from the standard
     library are the useful lemmas. *)
 
-Theorem all_run {A} (P : A -> Prop) (m : nondet A) : all P m <-> Forall P (run m).
+Theorem all_run {A} (P : A -> Prop) (m : nondet A) :
+  all P m <-> Forall P (run m).
 Proof.
   induction m as [x | c k IH]; simpl.
   - rewrite -> Forall_cons_iff.
@@ -106,7 +108,8 @@ Proof.
       exact (Forall_app P (run (k true)) (run (k false))).
 Qed.
 
-Theorem any_run {A} (P : A -> Prop) (m : nondet A) : any P m <-> Exists P (run m).
+Theorem any_run {A} (P : A -> Prop) (m : nondet A) :
+  any P m <-> Exists P (run m).
 Proof.
   induction m as [x | c k IH]; simpl.
   - rewrite -> Exists_cons.
@@ -121,7 +124,7 @@ Qed.
 
 (** [all] is the demonic reading, so it is monotone in [P]. *)
 Lemma all_mono {A} (P Q : A -> Prop) (m : nondet A) :
-  (forall x, P x -> Q x) -> all P m -> all Q m.
+  P ⊆ Q -> all P m -> all Q m.
 Proof.
   intros H_impl HP.
   rewrite -> all_run in HP.
@@ -130,7 +133,7 @@ Proof.
 Qed.
 
 Lemma any_mono {A} (P Q : A -> Prop) (m : nondet A) :
-  (forall x, P x -> Q x) -> any P m -> any Q m.
+  P ⊆ Q -> any P m -> any Q m.
 Proof.
   intros H_impl HP.
   rewrite -> any_run in HP.
