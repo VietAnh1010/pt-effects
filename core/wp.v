@@ -46,6 +46,22 @@ Proof. intros P x H_pt. exact H_pt. Qed.
 Lemma refines_trans {A B} (pt1 pt2 pt3 : PT A B) : pt1 ⊑ pt2 -> pt2 ⊑ pt3 -> pt1 ⊑ pt3.
 Proof. intros H12 H23 P x H_pt. exact (H23 P x (H12 P x H_pt)). Qed.
 
+(** Section 2.2's [refinement]. In the pure setting refinement is extensional
+    equality of functions: [wp f] is refined by [wp g] exactly when [f] and [g]
+    agree pointwise. The forward direction instantiates the postcondition at
+    [fun x y => f x = y]. The right-hand side is itself pointwise, so no
+    functional extensionality is needed. *)
+Lemma refinement {A : Type} {B : A -> Type} (f g : forall x : A, B x) :
+  wp f ⊑ wp g <-> (forall x : A, f x = g x).
+Proof.
+  unfold wp, refines. split.
+  - intros H_refines x.
+    exact (H_refines (fun x' y => f x' = y) x eq_refl).
+  - intros H_eq P x HP.
+    rewrite <- H_eq.
+    exact HP.
+Qed.
+
 Lemma subset_refl {A} (P : A -> Prop) : P ⊆ P.
 Proof. intros x HP. exact HP. Qed.
 
