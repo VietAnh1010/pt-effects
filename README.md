@@ -20,6 +20,7 @@ Requires Rocq 9.0 (tested against 9.0.0).
 | --- | --- | --- |
 | `core/free.v` | `pt_effects.core.free` | §2 - the free monad `Free C R a`, `bind`, monad laws |
 | `core/wp.v` | `pt_effects.core.wp` | §2–3 - `wp`, predicate transformers `PT`, refinement `⊑`, `⊆` |
+| `core/fold.v` | `pt_effects.core.fold` | §4.2 - `alg`, `fold`, `wp_free`, `fold_bind`, `compositionality_left`/`_right` |
 | `core/spec.v` | `pt_effects.core.spec` | §7 - `Spec` records, `wp_spec` |
 | `effects/partial.v` | `pt_effects.effects.partial` | §3, §6 - `Abort`, `must_pt`, `may_pt`, `wp_partial`, `dom` |
 | `effects/state.v` | `pt_effects.effects.state` | §4 - `Get`/`Put`, `run`, `state_pt`, `wp_state` |
@@ -39,8 +40,20 @@ Places where the Rocq version departs from the Agda:
   `Prop`).
 - **Functional extensionality.** The `Step` cases of the monad laws need
   `extensionality` - two continuations agreeing pointwise are not
-  definitionally equal in Rocq. Agda's development sidesteps this. Only
-  `core/free.v` depends on it (`bind_pure_r` and `bind_assoc`, nothing else).
+  definitionally equal in Rocq. Agda's development sidesteps this. Confined to
+  `core/free.v` (`bind_pure_r`, `bind_assoc`) and `core/fold.v` (`fold_bind`,
+  and so `compositionality_left`/`_right`); nothing else depends on it.
+- **§4.2 `compositionality` is not stated.** The `wp` in the paper's
+  `pt c (wp f P)` is not §2's: there `P` is relational, here it is a bare
+  predicate on results, forced by `pt (c >>= f) P`. Injecting one into the
+  relational `wp_free` needs `fun _ => P`, and the result is convertible with
+  `fold_bind`. So only `fold_bind` is stated, and
+  `compositionality_left`/`_right` rest on it directly.
+- **The fold's carrier is arbitrary.** The paper's general `pt` lands in `Set`,
+  but `statePT` folds into `s -> Set`, putting state outside the general result -
+  which is why §4.2 proves it twice. `fold.fold` folds into any `X`, so
+  `state_pt` is its `X := S -> Prop` instance and `fold_bind` covers both cases.
+  Refinement needs `Prop`, so `wp_free` and everything below it is fixed there.
 - **`may_pt` is indexed.** The paper's `mayPT` takes a bare predicate on
   results, where `mustPT` takes a relation between input and output. Here both
   take the indexed relation, so the two families are interchangeable and their

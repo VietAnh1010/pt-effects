@@ -37,6 +37,9 @@ Fixpoint map {C R A B} (f : A -> B) (m : free C R A) : free C R B :=
   | Step c k => Step c (fun r => map f (k r))
   end.
 
+Definition kleisli {C' R A B C} (f : A -> free C' R B) (g : B -> free C' R C) (x : A) : free C' R C :=
+  bind (f x) g.
+
 Module FreeNotations.
   Declare Scope free_scope.
   Delimit Scope free_scope with free.
@@ -44,6 +47,7 @@ Module FreeNotations.
 
   Notation "m >>= f" := (bind m f) (at level 50, left associativity) : free_scope.
   Notation "f <$> m" := (map f m) (at level 65, right associativity) : free_scope.
+  Notation "f >=> g" := (kleisli f g) (at level 55, right associativity) : free_scope.
 
   Notation "let+ x := m 'in' k" := (map (fun x => k) m) (at level 100, x binder, right associativity) : free_scope.
   Notation "let* x := m 'in' k" := (bind m (fun x => k)) (at level 100, x binder, right associativity) : free_scope.
